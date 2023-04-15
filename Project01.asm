@@ -28,6 +28,7 @@ empty2: .asciiz " "
 hex_result: .space 4
 empty3: .asciiz " "
 binary_result: .space 16
+
 .text
 main_loop:
     li      $v0,                                    4
@@ -103,7 +104,6 @@ binary:
     addi    $sp,                                    $sp,                    4
     j       displayResults
 
-
 hexadecimal:
     li      $v0,                                    4
     la      $a0,                                    separator
@@ -152,6 +152,19 @@ decimal:
     la      $a0,                                    decimal_prompt
     syscall 
 
+    li      $v0,                                    5
+    syscall 
+
+    li      $t1,                                    65536
+    slt     $t1,                                    $v0,                    $t1
+    li      $t2,                                    -1
+    slt     $t2,                                    $t2,                    $v0
+    bne     $t2,                                    $t1,                    invalid
+
+    addi    $sp,                                    $sp,                    -4
+    sw      $v0,                                    0($sp)
+
+    li      $v0,                                    4
     la      $a0,                                    separator
     syscall 
 
@@ -159,7 +172,17 @@ decimal:
     li      $a0,                                    '\n'
     syscall 
 
-    j       main_loop
+    lw      $a0,                                    0($sp)
+    jal     decimalToBinary
+    lw      $a0,                                    0($sp)
+    jal     decimalToHex
+
+    la      $a0,                                    binary_result
+    la      $a2,                                    hex_result
+
+    lw      $a1,                                    0($sp)
+    addi    $sp,                                    $sp,                    4
+    j       displayResults
 
 binaryToDecimal:                                                                                                                                # a0 = string address, $a1 = string length (17 exclusive), $v0 = return word
     addi    $a1,                                    $a1,                    -1                                                                  # $a1 = 16
@@ -167,6 +190,7 @@ binaryToDecimal:                                                                
     sw      $s0,                                    0($sp)
     sw      $s1,                                    4($sp)
     li      $s0,                                    0
+
 binaryToDecimal_loop:
     beqz    $a1,                                    binaryToDecimal_exit
     lbu     $t0,                                    0($a0)
@@ -210,6 +234,7 @@ decimalToHex:                                                                   
     la      $v0,                                    hex_result
     li      $t1,                                    0
     addi    $v0,                                    $v0,                    3
+
 decimalToHex_loop:
     li      $t2,                                    4
     slt     $t2,                                    $t1,                    $t2
@@ -228,6 +253,7 @@ decimalToHex_loop:
     addi    $v0,                                    $v0,                    -1
     addi    $t1,                                    $t1,                    1
     j       decimalToHex_loop
+
 decimalToHex_Letter:
     addi    $t2,                                    $t2,                    'A'
     addi    $t2,                                    $t2,                    -10
@@ -235,6 +261,7 @@ decimalToHex_Letter:
     addi    $v0,                                    $v0,                    -1
     addi    $t1,                                    $t1,                    1
     j       decimalToHex_loop
+
 decimalToHex_exit:
     jr      $ra
 
@@ -242,6 +269,7 @@ decimalToBinary:                                                                
     la      $v0,                                    binary_result
     li      $t1,                                    0
     addi    $v0,                                    $v0,                    15
+
 decimalToBinary_loop:
     li      $t2,                                    16
     slt     $t2,                                    $t1,                    $t2
@@ -257,6 +285,7 @@ decimalToBinary_loop:
     addi    $v0,                                    $v0,                    -1
     addi    $t1,                                    $t1,                    1
     j       decimalToBinary_loop
+
 decimalToBinary_exit:
     jr      $ra
 
@@ -302,6 +331,7 @@ hexToDecimal:                                                                   
     sw      $s0,                                    0($sp)
     sw      $s1,                                    4($sp)
     li      $s0,                                    0
+
 hexToDecimal_loop:
     beqz    $a1,                                    hexToDecimal_exit
     lbu     $t0,                                    0($a0)
@@ -313,6 +343,7 @@ hexToDecimal_loop:
     slt     $t4,                                    $t2,                    $t0
     bne     $t3,                                    $t4,                    hexToDecimal_checkLetterUpperCase
     j       hextoDecimal_convertNumber
+
 hexToDecimal_checkLetterUpperCase:
     li      $t1,                                    'G'
     li      $t2,                                    '@'
@@ -413,7 +444,7 @@ invalid:
     syscall 
 
     lw      $s0,                                    0($sp)
-    addi    $sp,                                    $sp,                    4
+    # addi    $sp,                                    $sp,                    4
     li      $t0,                                    1
     beq     $s0,                                    $t0,                    binary
 
@@ -427,12 +458,14 @@ invalid:
 
 power:                                                                                                                                          # $a0 = base, $a1 = power (possitive int)
     li      $v0,                                    1
+
 power_loop:
     beqz    $a1,                                    power_return
     mult    $v0,                                    $a0
     mflo    $v0
     addi    $a1,                                    $a1,                    -1
     j       power_loop
+
 power_return:
     jr      $ra
 
