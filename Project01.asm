@@ -1,14 +1,13 @@
 .data
 title: .asciiz "\n                   Number converter"
 
-
 separator: .asciiz "\n----------------------------------------------------------"
 
 prompt: .asciiz "\n1. Binary to hexadecimal and decimal\n2. Hexadecimal to binary and decimal\n3. Decimal to binary and hexadecimal\n4. Exit\n"
 prompt_msg: .asciiz "\nEnter a value from the menu: "
 
 binary_prompt: .asciiz "\nEnter a 16-bit binary number: "
-decimal_prompt: .asciiz "\nEnter a decimal number between 0 and 65,535: "
+decimal_prompt: .asciiz "\nEnter an integer between 0 and 65,535: "
 hexadecimal_prompt: .asciiz "\n Enter a 4 digit hexadecimal number: 0x"
 
 binary_msg: .asciiz "\nBinary number: "
@@ -17,7 +16,9 @@ decimal_msg: .asciiz "\nDecimal number: "
 
 hexadecimal_msg: .asciiz "\nHexadecimal number: 0x"
 
+continue_msg: .asciiz "\nPress any key to return to the menu: "
 
+results_msg: .asciiz "                        Results\n"
 
 invalid_msg: .asciiz "\nInvalid. Please try again"
 
@@ -28,10 +29,15 @@ empty2: .asciiz " "
 hex_result: .space 4
 empty3: .asciiz " "
 binary_result: .space 16
+empty4: .asciiz " "
+confirmation_str: .space 1
 
 .text
 main_loop:
     li      $v0,                                    4
+    la      $a0,                                    separator
+    syscall 
+
     la      $a0,                                    title
     syscall 
 
@@ -164,12 +170,12 @@ decimal:
     addi    $sp,                                    $sp,                    -4
     sw      $v0,                                    0($sp)
 
-    li      $v0,                                    4
-    la      $a0,                                    separator
-    syscall 
-
     li      $v0,                                    11
     li      $a0,                                    '\n'
+    syscall 
+
+    li      $v0,                                    4
+    la      $a0,                                    separator
     syscall 
 
     lw      $a0,                                    0($sp)
@@ -293,6 +299,10 @@ displayResults:                                                                 
     move    $t0,                                    $a0
 
     li      $v0,                                    4
+    la      $a0,                                    results_msg
+    syscall 
+
+    li      $v0,                                    4
     la      $a0,                                    binary_msg
     syscall 
 
@@ -313,15 +323,29 @@ displayResults:                                                                 
     move    $a0,                                    $a2
     syscall 
 
+    li      $v0,                                    11
+    li      $a0,                                    '\n'
+    syscall 
+
+    li      $v0,                                    4
     la      $a0,                                    separator
+    syscall 
+
+    lw      $s0,                                    0($sp)
+    addi    $sp,                                    $sp,                    4
+
+    li      $v0,                                    4
+    la      $a0,                                    continue_msg
+    syscall 
+
+    li      $v0,                                    8
+    la      $a0,                                    confirmation_str
+    li      $a1,                                    2
     syscall 
 
     li      $v0,                                    11
     li      $a0,                                    '\n'
     syscall 
-
-    lw      $s0,                                    0($sp)
-    addi    $sp,                                    $sp,                    4
 
     j       main_loop
 
@@ -444,7 +468,7 @@ invalid:
     syscall 
 
     lw      $s0,                                    0($sp)
-    # addi    $sp,                                    $sp,                    4
+                                                                                                                                                # addi    $sp,                                    $sp,                    4
     li      $t0,                                    1
     beq     $s0,                                    $t0,                    binary
 
